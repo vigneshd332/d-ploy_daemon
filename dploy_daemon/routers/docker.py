@@ -13,8 +13,8 @@ from fastapi.params import Depends
 from dploy_daemon.dependencies import get_docker
 from dploy_daemon.models.docker import (ContainerDetails,
                                         CreateContainerRequest, DeleteRequest,
-                                        SuccessResponse)
-from dploy_daemon.models.exceptions import GenericError
+                                        )
+from dploy_daemon.models.exceptions import GenericError, SuccessResponse
 
 router = APIRouter(
     prefix="/docker",

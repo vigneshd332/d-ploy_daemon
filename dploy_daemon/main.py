@@ -12,7 +12,7 @@ from fastapi import Depends, FastAPI
 
 from dploy_daemon.config import Settings
 from dploy_daemon.dependencies import check_authentication
-from dploy_daemon.routers import config, deployments, docker
+from dploy_daemon.routers import config, deployments, docker, docker_compose
 
 rotating_file_handler = TimedRotatingFileHandler("logs/d-ploy_daemon.log",
                                                  when="W0",
@@ -30,6 +30,7 @@ app: FastAPI = FastAPI(dependencies=[Depends(check_authentication)])
 app.include_router(config.router)
 app.include_router(deployments.router)
 app.include_router(docker.router)
+app.include_router(docker_compose.router)
 
 
 @app.get("/")

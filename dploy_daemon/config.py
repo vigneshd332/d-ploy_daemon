@@ -8,6 +8,7 @@ from typing import Optional
 
 from dotenv import find_dotenv, load_dotenv
 from pydantic import BaseSettings
+from pathlib import Path
 
 load_dotenv(find_dotenv())
 
@@ -16,6 +17,7 @@ class Settings(BaseSettings):  # pylint: disable=too-few-public-methods
     """Class for global settings"""
     environment: Optional[str] = os.getenv("ENVIRONMENT")
     log_level: str = os.getenv("LOGLEVEL", "WARNING").upper()
+    deploy_dir: Path = Path(os.getenv("DEPLOYMENTSFOLDER", "./deployments"))
 
 
 settings = Settings()

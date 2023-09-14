@@ -7,11 +7,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-class SuccessResponse(BaseModel):
-    """Model for success response"""
-    message: str = Field(..., description="Info message")
-
-
 class CreateContainerRequest(BaseModel):
     """Model for create container request"""
     image: str = Field(..., description="Image name")
