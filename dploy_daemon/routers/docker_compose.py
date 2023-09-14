@@ -37,7 +37,7 @@ async def up(
         )
     try:
         subprocess.Popen(f"""docker compose -f {shlex.quote(str(deploy_path))} up -d
-                         {shlex.quote(up_request.service if up_request.service else '')}
+                         {shlex.quote(up_request.service) if up_request.service else ''}
                          {'--build' if up_request.build else ''}
                          {'--no-cache' if up_request.no_cache else ''} &""",
                          shell=True,
