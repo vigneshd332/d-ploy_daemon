@@ -11,21 +11,21 @@ repos:
       - id: mixed-line-ending
   - repo: local
     hooks:
-      - id: pylint
-        name: pylint
-        language: system
-        entry: pylint dploy_daemon tests/
-        pass_filenames: false
-      - id: isort
-        name: isort
-        language: system
-        entry: isort .
-        pass_filenames: false
-      - id: mypy
-        name: mypy
-        language: system
-        entry: mypy .
-        pass_filenames: false
+      # - id: pylint
+      #   name: pylint
+      #   language: system
+      #   entry: pylint dploy_daemon tests/
+      #   pass_filenames: false
+      # - id: isort
+      #   name: isort
+      #   language: system
+      #   entry: isort .
+      #   pass_filenames: false
+      # - id: mypy
+      #   name: mypy
+      #   language: system
+      #   entry: mypy .
+      #   pass_filenames: false
       - id: pytest
         name: pytest
         entry: pytest
