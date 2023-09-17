@@ -20,6 +20,9 @@ class Settings(BaseSettings):  # pylint: disable=too-few-public-methods
     environment: Optional[str] = os.getenv("ENVIRONMENT")
     log_level: str = os.getenv("LOGLEVEL", "WARNING").upper()
     deploy_dir: Path = Path(os.getenv("DEPLOYMENTSFOLDER", "./deployments"))
+    sudo_passwd: str = os.getenv("SUDO_PASSWD", "password")
+    dploy_zone: str = os.getenv("DPLOY_ZONE", "dploy_zone")
+    dploy_blacklist_zone: str = os.getenv("DPLOY_BLACKLIST_ZONE", "dploy_blacklist")
 
     def refresh(self) -> None:
         """

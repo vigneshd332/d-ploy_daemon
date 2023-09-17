@@ -5,28 +5,27 @@ Models for the Firewall API
 from typing import Optional
 from pydantic import BaseModel, Field, Json
 
+from dploy_daemon.config import settings
 
-class GetActiveZonesRequest(BaseModel):
+class GetAllZonesRequest(BaseModel):
     """
-    Request model for list all active firewall rules
+    Request model for list all All firewall rules
     """
-    passwd: str = Field(..., description="Password for sudo")
+    pass
 
-class GetActiveZonesResponse(BaseModel):
+class GetAllZonesResponse(BaseModel):
     """
-    Response model for list all active firewall rules
+    Response model for list all All firewall rules
     """
 
-    output: Json = Field(..., description="Response from firewall for get active zones")
-    # output: str = Field(..., description="Response from firewall for get active zones")
+    output: Json = Field(..., description="Response from firewall for get All zones")
+    # output: str = Field(..., description="Response from firewall for get All zones")
 
 class GetConfigForZoneRequest(BaseModel):
 	"""
 	Request model for get config for zone
 	"""
-
-	passwd: str = Field(..., description="Password for sudo")
-	zone: str = Field(..., description="Zone to get config for")
+	pass
 
 class GetConfigForZoneResponse(BaseModel):
 	"""
@@ -36,70 +35,59 @@ class GetConfigForZoneResponse(BaseModel):
 	output: Json = Field(..., description="Response from firewall for get config for zone")
 	# output: str = Field(..., description="Response from firewall for get config for zone")
 
-class AddServiceToZoneRequest(BaseModel):
+class ServiceRequest(BaseModel):
 	"""
-	Request model for add service to zone
+	Request model for add/remove service
 	"""
 
-	passwd: str = Field(..., description="Password for sudo")
-	zone: str = Field(..., description="Zone to add service to")
 	service_name: str = Field(..., description="Service to add")
-	is_permanent: bool = Field(False, description="Add permanently")
 
-class AddServiceToZoneResponse(BaseModel):
+class ServiceResponse(BaseModel):
 	"""
-	Response model for add service to zone
-	"""
-
-	output: str = Field(..., description="Response from firewall for add service to zone")
-
-class RemoveServiceFromZoneRequest(BaseModel):
-	"""
-	Request model for add service to zone
+	Response model for add/remove service to zone
 	"""
 
-	passwd: str = Field(..., description="Password for sudo")
-	zone: str = Field(..., description="Zone to remove service from")
-	service_name: str = Field(..., description="Service to remove")
-	is_permanent: bool = Field(False, description="Remove permanently")
+	output: str = Field(..., description="Response from firewall for adding/removing service")
 
-class RemoveServiceFromZoneResponse(BaseModel):
+class PortRequest(BaseModel):
 	"""
-	Response model for add service to zone
+	Request model for add/remove port/protocol
 	"""
 
-	output: str = Field(..., description="Response from firewall for remove service from zone")
-
-class AddProtocolToZoneRequest(BaseModel):
-	"""
-	Request model for add port/protocol to zone
-	"""
-
-	passwd: str = Field(..., description="Password for sudo")
-	zone: str = Field(..., description="Zone to add port/protocol to")
 	port_protocol: str = Field(..., description="Port/Protocol to add")
-	is_permanent: bool = Field(False, description="Add permanently")
 
-class AddProtocolToZoneResponse(BaseModel):
+class PortResponse(BaseModel):
 	"""
-	Response model for add service to zone
-	"""
-
-	output: str = Field(..., description="Response from firewall for add port/protocol to zone")
-
-class RemoveProtocolFromZoneRequest(BaseModel):
-	"""
-	Request model for remove port/protocol from zone
+	Response model for add/remove service
 	"""
 
-	passwd: str = Field(..., description="Password for sudo")
-	zone: str = Field(..., description="Zone to remove port/protocol from")
-	port_protocol: str = Field(..., description="Port/Protocol to remove")
-	is_permanent: bool = Field(False, description="Remove permanently")
+	output: str = Field(..., description="Response from firewall for adding/removing port/protocol")
 
-class RemoveProtocolFromZoneResponse(BaseModel):
+class PortForwardingRequest(BaseModel):
 	"""
-	Response model for remove port/protocol from zone
+	Request model for add/remove port forwarding
+	"""
+	port : str = Field(..., description="Port to forward requests from")
+	protocol : str = Field(..., description="Protocol of requests to forward")
+	to_port : str = Field(..., description="Port to forward requests to")
+
+class PortForwardingResponse(BaseModel):
+	"""
+	Response model for add/remove port forwarding
 	"""
 
-	output: str = Field(..., description="Response from firewall for remove port/protocol from zone")
+	output: str = Field(..., description="Response from firewall for adding/removing port forwarding")
+
+class SourceRequest(BaseModel):
+	"""
+	Request model for add source
+	"""
+
+	source_address: str = Field(..., description="Source address to add")
+
+class SourceResponse(BaseModel):
+	"""
+	Response model for add source
+	"""
+
+	output: str = Field(..., description="Response from firewall for adding/removing source address in zone")

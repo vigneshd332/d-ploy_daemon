@@ -11,18 +11,18 @@ import uvicorn
 from fastapi import Depends, FastAPI
 
 from dploy_daemon.config import Settings
-from dploy_daemon.dependencies import check_authentication
+from dploy_daemon.dependencies import check_authentication, firewall_init_config
 from dploy_daemon.routers import config, deployments, docker, docker_compose, firewall
 
 rotating_file_handler = TimedRotatingFileHandler("logs/d-ploy_daemon.log",
-                                                 when="W0",
-                                                 backupCount=48,
-                                                 utc=True)
+												 when="W0",
+												 backupCount=48,
+												 utc=True)
 
 settings = Settings()
 logging.basicConfig(level=settings.log_level,
-                    format="%(asctime)s %(levelname)s: %(message)s",
-                    handlers=[logging.StreamHandler(sys.stdout), rotating_file_handler])
+					format="%(asctime)s %(levelname)s: %(message)s",
+					handlers=[logging.StreamHandler(sys.stdout), rotating_file_handler])
 
 app: FastAPI = FastAPI(dependencies=[Depends(check_authentication)])
 
@@ -36,12 +36,13 @@ app.include_router(firewall.router)
 
 @app.get("/")
 async def root() -> dict[str, str]:
-    """Basic route for testing"""
-    return {"message": "D-Ploy Daemon is running!"}
+	"""Basic route for testing"""
+	return {"message": "D-Ploy Daemon is running!"}
 
+firewall_init_config()
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2 and sys.argv[1] == "docs":
-        print(json.dumps(app.openapi(), indent=4))
-    else:
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+	if len(sys.argv) == 2 and sys.argv[1] == "docs":
+		print(json.dumps(app.openapi(), indent=4))
+	else:
+		uvicorn.run(app, host="0.0.0.0", port=8000)
