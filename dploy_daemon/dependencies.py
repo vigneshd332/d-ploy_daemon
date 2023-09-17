@@ -4,6 +4,7 @@ Miscellaneous dependencies for the API.
 
 import subprocess
 import shlex
+import sys
 
 import docker
 from docker.client import DockerClient
