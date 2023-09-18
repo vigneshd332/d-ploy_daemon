@@ -36,17 +36,20 @@ async def up(
             detail="Deployment not found",
         )
     try:
-        subprocess.Popen(f"""docker compose -f {shlex.quote(str(deploy_path))} up -d
-                         {shlex.quote(up_request.service) if up_request.service else ''}
+        process = subprocess.Popen(f"""docker compose -f {shlex.quote(str(deploy_path))} up 
+                        {shlex.quote(up_request.service) if up_request.service else ''} -d
                          {'--build' if up_request.build else ''}
-                         {'--no-cache' if up_request.no_cache else ''} &""",
-                         shell=True,
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
+                         {'--no-cache' if up_request.no_cache else ''}""",
+                                   shell=True,
+                                   stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.PIPE)
+        _, stderr = process.communicate()
+        if process.returncode != 0:
+            raise OSError(stderr.decode("utf-8"))
     except OSError as exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error starting deployment - {exception.strerror}",
+            detail=exception.strerror,
         )
     return SuccessResponse(message="Deployment started successfully")
 
@@ -67,17 +70,20 @@ async def down(
     if not deploy_path.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Deployment not found",
+            detail="Deployment/Compose File not found",
         )
     try:
-        subprocess.Popen(f"""docker compose -f {shlex.quote(str(deploy_path))} down
-                         {shlex.quote(down_request.service if down_request.service else '')} &""",
-                         shell=True,
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(f"""docker compose -f {shlex.quote(str(deploy_path))} down
+                         {shlex.quote(down_request.service if down_request.service else '')}""",
+                                   shell=True,
+                                   stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.PIPE)
+        _, stderr = process.communicate()
+        if process.returncode != 0:
+            raise OSError(stderr.decode("utf-8"))
     except OSError as exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error stopping deployment - {exception.strerror}",
+            detail=exception.strerror,
         )
     return SuccessResponse(message="Deployment stopped successfully")

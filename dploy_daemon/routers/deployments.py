@@ -26,13 +26,17 @@ async def create_with_git(
     remote_url = "".join(["://".join([request.repo_url.split("://")[
                          0], f"{request.username}:{request.password}@"]), request.repo_url.split("://")[1]])
     try:
-        subprocess.Popen(f"""git clone {shlex.quote(remote_url)} {shlex.quote(str(settings.deploy_dir.joinpath(request.deployment_name)))} --branch {shlex.quote(request.repo_branch)} &""",
-                         shell=True,
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(f"""git clone {shlex.quote(remote_url)} {shlex.quote(str(settings.deploy_dir.joinpath(request.deployment_name)))} --branch {shlex.quote(request.repo_branch)}""",
+                                   shell=True,
+                                   stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.PIPE)
+        _, stderr = process.communicate()
+        if process.returncode != 0:
+            raise OSError(stderr.decode("utf-8"))
+
     except OSError as exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating deployment - {exception.strerror}",
         )
-    return SuccessResponse(message="Deployment created successfully")
+    return SuccessResponse(message=f"Deployment '{request.deployment_name}' created successfully")

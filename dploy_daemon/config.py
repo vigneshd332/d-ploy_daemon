@@ -6,7 +6,7 @@ Contains the global configuration for the API.
 import os
 from typing import Optional
 
-from dotenv import find_dotenv, load_dotenv
+from dotenv import find_dotenv, load_dotenv, set_key
 from pydantic import BaseSettings
 from pathlib import Path
 
@@ -22,7 +22,8 @@ class Settings(BaseSettings):  # pylint: disable=too-few-public-methods
     deploy_dir: Path = Path(os.getenv("DEPLOYMENTSFOLDER", "./deployments"))
     sudo_passwd: str = os.getenv("SUDO_PASSWD", "password")
     dploy_zone: str = os.getenv("DPLOY_ZONE", "dploy_zone")
-    dploy_blacklist_zone: str = os.getenv("DPLOY_BLACKLIST_ZONE", "dploy_blacklist")
+    dploy_blacklist_zone: str = os.getenv(
+        "DPLOY_BLACKLIST_ZONE", "dploy_blacklist")
 
     def refresh(self) -> None:
         """
@@ -33,3 +34,14 @@ class Settings(BaseSettings):  # pylint: disable=too-few-public-methods
 
 
 settings = Settings()
+
+
+def register_to_env(uuid: str, secret: str) -> None:
+    """
+    Registers the daemon to the environment
+    """
+    set_key(find_dotenv(), "DAEMON_ID", uuid)
+    set_key(find_dotenv(), "DAEMON_AUTH_SECRET", secret)
+    os.environ["DAEMON_ID"] = uuid
+    os.environ["DAEMON_AUTH_SECRET"] = secret
+    settings.refresh()
