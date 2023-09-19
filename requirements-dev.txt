@@ -13,4 +13,4 @@ lxml==4.9.3
 mypy==0.910
 
 # Workaround https://github.com/tiangolo/fastapi/issues/2595
-requests==2.26.0
+requests==2.31.0
