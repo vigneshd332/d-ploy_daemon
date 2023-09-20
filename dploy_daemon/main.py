@@ -10,9 +10,15 @@ from logging.handlers import TimedRotatingFileHandler
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException
 
+<<<<<<< Updated upstream
 from dploy_daemon.config import Settings, register_to_env
 from dploy_daemon.dependencies import check_authentication, firewall_init_config
 from dploy_daemon.models.daemon import RegisterRequest
+=======
+from dploy_daemon.config import Settings
+from dploy_daemon.dependencies import check_authentication, firewall_init_config, \
+									  docker_init_config, check_sudo, restart_docker, restart_firewalld
+>>>>>>> Stashed changes
 from dploy_daemon.routers import config, deployments, docker, docker_compose, firewall
 
 rotating_file_handler = TimedRotatingFileHandler("logs/d-ploy_daemon.log",
@@ -40,6 +46,7 @@ async def root() -> dict[str, str]:
     """Basic route for testing"""
     return {"message": "D-Ploy Daemon is running!"}
 
+<<<<<<< Updated upstream
 
 @app.post("/register")
 async def register(request: RegisterRequest) -> dict[str, str]:
@@ -51,6 +58,13 @@ async def register(request: RegisterRequest) -> dict[str, str]:
     return {"message": "Success!"}
 
 # firewall_init_config()
+=======
+check_sudo()
+docker_init_config()
+firewall_init_config()
+restart_docker()
+restart_firewalld()
+>>>>>>> Stashed changes
 
 if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "docs":

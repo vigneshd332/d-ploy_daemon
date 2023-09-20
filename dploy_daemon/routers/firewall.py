@@ -9,6 +9,8 @@ import json
 from fastapi import APIRouter, HTTPException, status
 from dploy_daemon.config import settings
 
+from dploy_daemon.dependencies import restart_docker, restart_firewalld
+
 from dploy_daemon.models.exceptions import GenericError, SuccessResponse
 from dploy_daemon.models.firewall import GetAllZonesRequest, GetAllZonesResponse, \
 		GetConfigForZoneRequest, GetConfigForZoneResponse, \
@@ -126,18 +128,25 @@ async def addService(request: ServiceRequest) -> ServiceResponse:
 						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --add-service={shlex.quote(str(request.service_name))} \
 						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --add-service={shlex.quote(str(request.service_name))} \
+						 --permanent && \
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 
 		if error and "ALREADY_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+		
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -161,17 +170,24 @@ async def removeService(request: ServiceRequest) -> ServiceResponse:
 						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --remove-service={shlex.quote(str(request.service_name))} \
 						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --remove-service={shlex.quote(str(request.service_name))} \
+						 --permanent && \
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "NOT_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -195,17 +211,24 @@ async def addPorts(request: PortRequest) -> PortResponse:
 						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --add-port={shlex.quote(str(request.port_protocol))} \
 						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --add-port={shlex.quote(str(request.port_protocol))} \
+						 --permanent && \
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "ALREADY_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+		
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -229,17 +252,24 @@ async def removePorts(request: PortRequest) -> PortResponse:
 						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --remove-port={shlex.quote(str(request.port_protocol))} \
 						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --remove-port={shlex.quote(str(request.port_protocol))} \
+						 --permanent && \
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "NOT_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+		
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -263,17 +293,24 @@ async def addPortForwarding(request: PortForwardingRequest) -> PortForwardingRes
 						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --add-forward-port=port={shlex.quote(str(request.port))}:proto={shlex.quote(str(request.protocol))}:toport={shlex.quote(str(request.to_port))} \
 						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --add-forward-port=port={shlex.quote(str(request.port))}:proto={shlex.quote(str(request.protocol))}:toport={shlex.quote(str(request.to_port))} \
+						 --permanent && \
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "ALREADY_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+		
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -297,17 +334,24 @@ async def removePortForwarding(request: PortForwardingRequest) -> PortForwarding
 						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --remove-forward-port=port={shlex.quote(str(request.port))}:proto={shlex.quote(str(request.protocol))}:toport={shlex.quote(str(request.to_port))} \
 						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --remove-forward-port=port={shlex.quote(str(request.port))}:proto={shlex.quote(str(request.protocol))}:toport={shlex.quote(str(request.to_port))} \
+						 --permanent && \
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "NOT_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+		
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -327,41 +371,67 @@ async def addSource(request: SourceRequest) -> SourceResponse:
 	Execute add source address to whitelist request
 	"""
 	try:
-		#Check if 0.0.0.0/0 is default enabled by dploy
-		check_ip = await getZoneConfig(settings.dploy_zone)
-		check_ip = check_ip.dict()
-		if len(check_ip['output']['sources'])==1 and check_ip['output']['sources'][0]=="0.0.0.0/0":
-			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
-						 --zone={shlex.quote(str(settings.dploy_zone))} \
-						 --remove-source='0.0.0.0/0' \
-						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
-						 shell=True,
-						 stdout=subprocess.PIPE,
-						 stderr=subprocess.PIPE)
+		# Check if the address to add contains /0
+		if "/0" in request.source_address:
+			request.source_address = "0.0.0.0/0"
 
-			output1, error1 = process1.communicate()
-			if error1 and "NOT_ENABLED" not in error1.decode('utf-8'):
+		if "0.0.0.0/0" in request.source_address:
+			process2 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+							   --zone=public \
+							   --add-source={shlex.quote(str(request.source_address))} \
+							   --permanent && \
+							   echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+							   shell=True,
+							   stdout=subprocess.PIPE,
+							   stderr=subprocess.PIPE)
+
+			_, error2 = process2.communicate()
+			if error2 and "ALREADY_ENABLED" not in error2.decode('utf-8'):
+				raise HTTPException(
+					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+					detail=error2.decode('utf-8'),
+				)
+			
+		else :
+			# set default zone to internal and add IP to dpoy_zone
+			process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+							--zone={shlex.quote(str(settings.dploy_zone)) if '/0' not in request.source_address else 'public'} \
+							--add-source={shlex.quote(str(request.source_address))} \
+							--permanent && \
+							echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+							--set-default-zone=internal && \
+							echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+							shell=True,
+							stdout=subprocess.PIPE,
+							stderr=subprocess.PIPE)
+			
+			_, error = process.communicate()
+			if error and "ALREADY_ENABLED" not in error.decode('utf-8') and "ZONE_ALREADY_SET" not in error.decode('utf-8'):
+				raise HTTPException(
+					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+					detail=error.decode('utf-8'),
+				)
+		
+		# If some /0 in whitelist, set default zone to public
+		check_ip = await getZoneConfig("public")
+		check_ip = check_ip.dict()
+		if "0.0.0.0/0" in check_ip['output']['sources']:
+			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+								--set-default-zone=public && \
+								echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+								shell=True,
+								stdout=subprocess.PIPE,
+								stderr=subprocess.PIPE)
+
+			_, error1 = process1.communicate()
+			if error1 and "ZONE_ALREADY_SET" not in error1.decode('utf-8'):
 				raise HTTPException(
 					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 					detail=error1.decode('utf-8'),
 				)
-
-		process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
-						 --zone={shlex.quote(str(settings.dploy_zone))} \
-						 --add-source={shlex.quote(str(request.source_address))} \
-						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
-						 shell=True,
-						 stdout=subprocess.PIPE,
-						 stderr=subprocess.PIPE)
-		
-		output, error = process.communicate()
-		if error and "ALREADY_ENABLED" not in error.decode('utf-8'):
-			raise HTTPException(
-				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-				detail=error.decode('utf-8'),
-			)
+			
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -370,7 +440,7 @@ async def addSource(request: SourceRequest) -> SourceResponse:
 		)
 	return SourceResponse(output=f"Source {request.source_address} added to whitelist successfully")
 
-#Remove source address from whitelist
+# Remove source address from whitelist
 @router.post("/remove-source-wtlst",
 			 responses={
 				 status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": GenericError},
@@ -381,42 +451,81 @@ async def removeSource(request: SourceRequest) -> SourceResponse:
 	Execute remove source address from whitelist request
 	"""
 	try:
-		process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
-						 --zone={shlex.quote(str(settings.dploy_zone))} \
-						 --remove-source={shlex.quote(str(request.source_address))} \
-						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
-						 shell=True,
-						 stdout=subprocess.PIPE,
-						 stderr=subprocess.PIPE)
-		
-		output, error = process.communicate()
-		if error and "NOT_ENABLED" not in error.decode('utf-8'):
-			raise HTTPException(
-				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-				detail=error.decode('utf-8'),
-			)
-		
-		#Check if no source is enabled
-		check_ip = await getZoneConfig(settings.dploy_zone)
+		# Check if the address to remove contains /0, if yes set default zone to internal
+		if "/0" in request.source_address:
+			request.source_address = "0.0.0.0/0"
+
+		check_ip = await getZoneConfig("public")
 		check_ip = check_ip.dict()
-		if check_ip['output']['sources']==['']:
+		if "0.0.0.0/0" in request.source_address and "0.0.0.0/0" in check_ip['output']['sources']:
 			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
-						 --zone={shlex.quote(str(settings.dploy_zone))} \
-						 --add-source='0.0.0.0/0' \
-						 --permanent && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
-						 shell=True,
-						 stdout=subprocess.PIPE,
-						 stderr=subprocess.PIPE)
-			
-			output1, error1 = process1.communicate()
-			if error1 and "ALREADY_ENABLED" not in error1.decode('utf-8'):
+							   --zone=public \
+							   --remove-source={shlex.quote(str(request.source_address))} \
+							   --permanent && \
+							   echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+							   shell=True,
+							   stdout=subprocess.PIPE,
+							   stderr=subprocess.PIPE)
+
+			_, error1 = process1.communicate()
+			if error1 and "NOT_ENABLED" not in error1.decode('utf-8'):
 				raise HTTPException(
 					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 					detail=error1.decode('utf-8'),
 				)
+
+			process2 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+							   --set-default-zone=internal && \
+							   echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+							   shell=True,
+							   stdout=subprocess.PIPE,
+							   stderr=subprocess.PIPE)
+
+			_, error2 = process2.communicate()
+			if error2:
+				raise HTTPException(
+					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+					detail=error2.decode('utf-8'),
+				)
+
+		else :
+			process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+							--zone={shlex.quote(str(settings.dploy_zone))} \
+							--remove-source={shlex.quote(str(request.source_address))} \
+							--permanent && \
+							echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+							shell=True,
+							stdout=subprocess.PIPE,
+							stderr=subprocess.PIPE)
 			
+			_, error = process.communicate()
+			if error and "NOT_ENABLED" not in error.decode('utf-8'):
+				raise HTTPException(
+					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+					detail=error.decode('utf-8'),
+				)
+		
+		# Check if the whitelist IPs are empty, if yes set default zone to public
+		check_ip = await getZoneConfig(settings.dploy_zone)
+		check_ip = check_ip.dict()
+		if check_ip['output']['sources'] == ['']:
+			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+							   --set-default-zone=public && \
+							   echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
+							   shell=True,
+							   stdout=subprocess.PIPE,
+							   stderr=subprocess.PIPE)
+
+			_, error1 = process1.communicate()
+			if error1:
+				raise HTTPException(
+					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+					detail=error1.decode('utf-8'),
+				)
+		
+		restart_docker()
+		restart_firewalld()
+		
 	except OSError as exception:
 		raise HTTPException(
 			status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -435,21 +544,30 @@ async def addSourceBlk(request: SourceRequest) -> SourceResponse:
 	Execute add source address to blacklist request
 	"""
 	try:
+		if "/0" in request.source_address:
+			raise HTTPException(
+				status_code=status.HTTP_403_FORBIDDEN,
+				detail="Addess with /0 should not be added to blacklist",
+			)
+		
 		process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
 						 --permanent \
 						 --zone={shlex.quote(str(settings.dploy_blacklist_zone))} \
 						 --add-source={shlex.quote(str(request.source_address))} && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "ALREADY_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+
+		restart_docker()
+		restart_firewalld()
 
 	except OSError as exception:
 		raise HTTPException(
@@ -473,17 +591,20 @@ async def removeSourceBlk(request: SourceRequest) -> SourceResponse:
 						 --permanent \
 						 --zone={shlex.quote(str(settings.dploy_blacklist_zone))} \
 						 --remove-source={shlex.quote(str(request.source_address))} && \
-						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --reload""",
+						 echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --complete-reload""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
 		
-		output, error = process.communicate()
+		_, error = process.communicate()
 		if error and "NOT_ENABLED" not in error.decode('utf-8'):
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+	
+		restart_docker()
+		restart_firewalld()
 		
 	except OSError as exception:
 		raise HTTPException(
