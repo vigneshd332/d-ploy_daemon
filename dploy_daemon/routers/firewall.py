@@ -12,8 +12,7 @@ from dploy_daemon.config import settings
 from dploy_daemon.dependencies import restart_docker, restart_firewalld
 
 from dploy_daemon.models.exceptions import GenericError, SuccessResponse
-from dploy_daemon.models.firewall import GetAllZonesRequest, GetAllZonesResponse, \
-		GetConfigForZoneRequest, GetConfigForZoneResponse, \
+from dploy_daemon.models.firewall import GetConfigForZoneRequest, GetConfigForZoneResponse, \
 		ServiceRequest, ServiceResponse, \
 		PortRequest, PortResponse, \
 		SourceRequest, SourceResponse, \
@@ -24,85 +23,59 @@ router = APIRouter(
 	tags=["firewall"],
 )
 
-#Get All zones
-@router.get("/get-all-zones",
-			 responses={
-				 status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": GenericError},
-				 status.HTTP_200_OK: {"model": GetAllZonesResponse},
-			 })
-async def getAllZones() -> GetAllZonesResponse:
-	"""
-	Execute get all the zones request
-	"""
-	try:
-		process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd --list-all-zones""",
-						 shell=True,
-						 stdout=subprocess.PIPE,
-						 stderr=subprocess.PIPE)
-
-		output, error = process.communicate()
-		if error:
-			raise HTTPException(
-				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-				detail=error.decode('utf-8'),
-			)
-
-		output = output.decode("utf-8")
-		dict_output = {}
-		tmp_out = {}
-		curr_zone = ""
-		for line in output.splitlines():
-			if line.startswith(" "):
-				key, value = line.strip().split(":")
-				tmp_out[key.strip()] = value.strip().split(" ")
-			else :
-				if curr_zone != "":
-					dict_output[curr_zone] = tmp_out
-				curr_zone = line.strip()
-				tmp_out = {}
-		
-		dict_output[curr_zone] = tmp_out
-		json_output = json.dumps(dict_output, indent=4)
-
-	except OSError as exception:
-		raise HTTPException(
-			status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-			detail=f"Error getting All zones - {exception.decode('utf-8')}",
-		)
-	return GetAllZonesResponse(output=json_output)
-
 #Get config for zone
-@router.get("/get-zone-config",
+@router.get("/get-config",
 			 responses={
 				 status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": GenericError},
 				 status.HTTP_200_OK: {"model": GetConfigForZoneResponse},
 			 })
-async def getZoneConfig(zone) -> GetConfigForZoneResponse:
+async def getZoneConfig() -> GetConfigForZoneResponse:
 	"""
 	Execute get config for zone request
 	"""
 	try:
 		process = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
-						 --zone={shlex.quote(str(zone))} \
+						 --zone={shlex.quote(str(settings.dploy_zone))} \
 						 --list-all""",
 						 shell=True,
 						 stdout=subprocess.PIPE,
 						 stderr=subprocess.PIPE)
+	
 		output, error = process.communicate()
 		if error:
 			raise HTTPException(
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
+		
+		process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
+						 --zone=public \
+						 --list-sources""",
+						 shell=True,
+						 stdout=subprocess.PIPE,
+						 stderr=subprocess.PIPE)
 
+		output1, error1 = process1.communicate()
+		if error1:
+			raise HTTPException(
+				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+				detail=error1.decode('utf-8'),
+			)
+
+		last_key = ""
 		dict_output = {}
 		output = output.decode("utf-8")
 		for line in output.splitlines():
 			if line.startswith(" "):
 				key, value = line.strip().split(":")
 				dict_output[key.strip()] = value.strip().split(" ")
-				# if len(dict_output[key.strip()]) == 1:
-				# 	dict_output[key.strip()] = dict_output[key.strip()][0]
+				last_key = key.strip()
+			
+			elif line.startswith("\t"):
+				dict_output[last_key].extend(line.strip().split(" "))
+		
+		output1 = output1.decode("utf-8")
+		dict_output['sources'].extend(output1.splitlines())
 		
 		json_output = json.dumps(dict_output, indent=4)
 
@@ -226,7 +199,7 @@ async def addPorts(request: PortRequest) -> PortResponse:
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
-		
+
 		restart_docker()
 		restart_firewalld()
 
@@ -267,7 +240,7 @@ async def removePorts(request: PortRequest) -> PortResponse:
 				status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 				detail=error.decode('utf-8'),
 			)
-		
+										  
 		restart_docker()
 		restart_firewalld()
 
@@ -413,7 +386,7 @@ async def addSource(request: SourceRequest) -> SourceResponse:
 				)
 		
 		# If some /0 in whitelist, set default zone to public
-		check_ip = await getZoneConfig("public")
+		check_ip = await getZoneConfig()
 		check_ip = check_ip.dict()
 		if "0.0.0.0/0" in check_ip['output']['sources']:
 			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
@@ -455,7 +428,7 @@ async def removeSource(request: SourceRequest) -> SourceResponse:
 		if "/0" in request.source_address:
 			request.source_address = "0.0.0.0/0"
 
-		check_ip = await getZoneConfig("public")
+		check_ip = await getZoneConfig()
 		check_ip = check_ip.dict()
 		if "0.0.0.0/0" in request.source_address and "0.0.0.0/0" in check_ip['output']['sources']:
 			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
@@ -506,7 +479,7 @@ async def removeSource(request: SourceRequest) -> SourceResponse:
 				)
 		
 		# Check if the whitelist IPs are empty, if yes set default zone to public
-		check_ip = await getZoneConfig(settings.dploy_zone)
+		check_ip = await getZoneConfig()
 		check_ip = check_ip.dict()
 		if check_ip['output']['sources'] == ['']:
 			process1 = subprocess.Popen(f"""echo {shlex.quote(str(settings.sudo_passwd))} | sudo -p '' -S firewall-cmd \
@@ -517,7 +490,7 @@ async def removeSource(request: SourceRequest) -> SourceResponse:
 							   stderr=subprocess.PIPE)
 
 			_, error1 = process1.communicate()
-			if error1:
+			if error1 and "ZONE_ALREADY_SET" not in error1.decode('utf-8'):
 				raise HTTPException(
 					status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 					detail=error1.decode('utf-8'),

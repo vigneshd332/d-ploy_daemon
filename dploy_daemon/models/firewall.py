@@ -7,20 +7,6 @@ from pydantic import BaseModel, Field, Json
 
 from dploy_daemon.config import settings
 
-class GetAllZonesRequest(BaseModel):
-    """
-    Request model for list all All firewall rules
-    """
-    pass
-
-class GetAllZonesResponse(BaseModel):
-    """
-    Response model for list all All firewall rules
-    """
-
-    output: Json = Field(..., description="Response from firewall for get All zones")
-    # output: str = Field(..., description="Response from firewall for get All zones")
-
 class GetConfigForZoneRequest(BaseModel):
 	"""
 	Request model for get config for zone
@@ -32,8 +18,7 @@ class GetConfigForZoneResponse(BaseModel):
 	Response model for get config for zone
 	"""
 
-	output: Json = Field(..., description="Response from firewall for get config for zone")
-	# output: str = Field(..., description="Response from firewall for get config for zone")
+	output: Json = Field(..., description="Response from firewall for get config")
 
 class ServiceRequest(BaseModel):
 	"""

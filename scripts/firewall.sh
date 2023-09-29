@@ -14,8 +14,8 @@ firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 1 -j RETURN
 firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 1 -j RETURN -s 172.16.0.0/12 -m comment --comment 'allow internal docker communication, private range'
 
 # 3.1 optional: for wider internal networks
-firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 1 -j RETURN -s 10.0.0.0/8 -m comment --comment 'allow internal docker communication, private range'
-#firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 1 -j RETURN -s 192.168.0.0/16 -m comment --comment 'allow internal docker communication, private range'
+# firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 1 -j RETURN -s 10.0.0.0/8 -m comment --comment 'allow internal docker communication, private range'
+# firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 1 -j RETURN -s 192.168.0.0/16 -m comment --comment 'allow internal docker communication, private range'
 
 # 4. Block all other IPs. This rule has lowest precedence, so you can add rules before this one later.
 firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 10 -j REJECT -m comment --comment 'reject all other traffic to DOCKER-USER'
